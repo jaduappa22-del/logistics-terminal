@@ -22,7 +22,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 세션 상태 초기화 (항만 메모 보드용)
+# 세션 상태 초기화 (항만 메모 보드 및 팀 퀵 메모용)
 if "port_memos" not in st.session_state:
   st.session_state.port_memos = {
       "부산항": {"status": "🟢 원활", "memo": "정상 하역 작업 진행 중"},
@@ -31,19 +31,25 @@ if "port_memos" not in st.session_state:
       "닝보항": {"status": "⚠️ 지연", "memo": "기상 악화로 터미널 일시 정체"},
   }
 
+if "team_quick_memos" not in st.session_state:
+  st.session_state.team_quick_memos = [
+      "📌 [공지] 오후 2시 물류팀 주간 화물 스케줄 점검 회의",
+      "📌 [전달] 상하이항 선적 건 관련 서류 마감 시간 확인 요망",
+  ]
+
 # 상단 AFK 시그니처 배너
 st.markdown("""
     <div class="main-header">
         <span>⚡ AFK LOGISTICS INTELLIGENCE DESK</span>
-        <span style="font-size: 13px; background-color: #18181b; color: #ffcc00; padding: 4px 10px; border-radius: 4px;">OPERATIONS DESK v3.0</span>
+        <span style="font-size: 13px; background-color: #18181b; color: #ffcc00; padding: 4px 10px; border-radius: 4px;">OPERATIONS DESK v3.1</span>
     </div>
 """, unsafe_allow_html=True)
 
-# 화면 분할: 좌측(메인 터미널, 시뮬레이터, CBM 계산기, 가이드, 뉴스), 우측(퀵링크, 선사 트래킹 덱, 항만 메모보드)
+# 화면 분할: 좌측(메인 터미널, CBM 계산기, 가이드, 뉴스), 우측(퀵링크, 선사 트래킹, 항만 메모, 팀 퀵 메모)
 col_left, col_right = st.columns([3, 1])
 
 with col_right:
-  # 1. 글로벌 선사 트래킹 링크 덱 (추가 기능 1)
+  # 1. 글로벌 선사 트래킹 링크 덱
   st.markdown(
       '<div class="card"><div class="sub-header">🌐 글로벌 주요 선사 트래킹</div>',
       unsafe_allow_html=True,
@@ -69,17 +75,11 @@ with col_right:
   st.markdown("- [한국해운신문](https://www.maritimepress.co.kr)")
   st.markdown("</div>", unsafe_allow_html=True)
 
-  # 3. 항만 특이사항 실시간 메모 보드 (추가 기능 3)
+  # 3. 항만 특이사항 실시간 메모 보드
   st.markdown(
       '<div class="card"><div class="sub-header">📋 당일 항만 실시간 메모보드</div>',
       unsafe_allow_html=True,
   )
-  st.markdown(
-      '<p style="font-size: 12px; color: #71717a;">팀원 누구나 현장 특이사항을'
-      " 업데이트할 수 있습니다.</p>",
-      unsafe_allow_html=True,
-  )
-
   selected_port = st.selectbox(
       "대상 항만 선택", list(st.session_state.port_memos.keys())
   )
@@ -96,11 +96,35 @@ with col_right:
     st.success(f"{selected_port} 현황이 갱신되었습니다!")
 
   st.markdown("---")
-  # 현재 등록된 항만 상태 요약 표시
   for port, info in st.session_state.port_memos.items():
     st.markdown(
         f"• **{port}**: {info['status']} <br><span"
         f" style='font-size:12px; color:#52525b;'>({info['memo']})</span>",
+        unsafe_allow_html=True,
+    )
+  st.markdown("</div>", unsafe_allow_html=True)
+
+  # 4. 물류팀 전용 사내 퀵 메모장 (추가 기능)
+  st.markdown(
+      '<div class="card"><div class="sub-header">📝 물류팀 퀵 메모장</div>',
+      unsafe_allow_html=True,
+  )
+  new_team_memo = st.text_input("공유할 특이사항 입력", placeholder="예: 연차 사유 등")
+  if st.button("메모 추가", use_container_width=True):
+    if new_team_memo:
+      st.session_state.team_quick_memos.append(new_team_memo)
+      st.success("메모가 추가되었습니다!")
+
+  if st.button("메모 전체 초기화", use_container_width=True):
+    st.session_state.team_quick_memos = []
+    st.success("메모가 초기화되었습니다.")
+
+  st.markdown("---")
+  for m in st.session_state.team_quick_memos:
+    st.markdown(
+        f"<div style='background-color: #fafafa; padding: 6px 8px;"
+        f" border-radius: 4px; font-size: 13px; margin-bottom: 4px; border-left:"
+        f" 3px solid #ffcc00;'>{m}</div>",
         unsafe_allow_html=True,
     )
   st.markdown("</div>", unsafe_allow_html=True)
@@ -168,54 +192,36 @@ with col_left:
 
   st.markdown("</div>", unsafe_allow_html=True)
 
-  # 2. 실무 물류비 변동 심플 시뮬레이터
+  # 2. 글로벌 선박 위치 트랙킹 레이더 위젯 (추가 기능 1)
   st.markdown("""
         <div class="card">
-            <div class="sub-header">🧮 실무 물류비 변동 심플 시뮬레이터</div>
+            <div class="sub-header">🛰️ 글로벌 선박 및 컨테이너 트랙킹 퀵 레이더</div>
             <p style="font-size: 13px; color: #52525b; margin-bottom: 15px;">
-            환율과 해상 운임 변동에 따른 비용 증감을 직관적으로 계산합니다.
+            BL 번호나 컨테이너 번호 또는 선박명을 입력하여 주요 해운사 시스템에서 실시간 위치를 즉시 조회하세요.
             </p>
     """, unsafe_allow_html=True)
 
-  s_col1, s_col2, s_col3 = st.columns(3)
-  with s_col1:
-    base_budget = st.number_input(
-        "기준 월 물류비 (만원)", min_value=100, max_value=1000000, value=10000
+  track_col1, track_col2 = st.columns([2, 1])
+  with track_col1:
+    tracking_number = st.text_input(
+        "BL 번호 또는 컨테이너 번호 입력", placeholder="예: HMMQ12345678"
     )
-  with s_col2:
-    fx_inc = st.slider(
-        "환율 상승 폭 (%)", min_value=-10.0, max_value=20.0, value=0.0, step=0.5
-    )
-  with s_col3:
-    freight_inc = st.slider(
-        "운임 상승 폭 (%)",
-        min_value=-20.0,
-        max_value=50.0,
-        value=3.0,
-        step=0.5,
-    )
-
-  added_cost_fx = base_budget * (fx_inc / 100.0) * 0.5
-  added_cost_freight = base_budget * (freight_inc / 100.0) * 0.5
-  total_added = added_cost_fx + added_cost_freight
-  final_budget = base_budget + total_added
-
-  m_col1, m_col2 = st.columns(2)
-  with m_col1:
-    st.metric(
-        label="조정 후 예상 총 물류비",
-        value=f"{final_budget:,.1f} 만원",
-        delta=f"{total_added:+,.1f} 만원",
-    )
-  with m_col2:
-    st.info(
-        f"💡 환율 {fx_inc}%·운임 {freight_inc}% 변동 시, 당사 포트폴리오 기준"
-        f" 총 **{total_added:,.1f}만원**의 증감이 발생합니다."
-    )
+  with track_col2:
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("🔍 Maersk 통합 조회", use_container_width=True):
+      if tracking_number:
+        safe_num = urllib.parse.quote(tracking_number)
+        st.markdown(
+            f'<meta http-equiv="refresh" content="0;url=https://www.maersk.com/tracking/{safe_num}">',
+            unsafe_allow_html=True,
+        )
+        st.success(f"'{tracking_number}' 트랙킹 페이지로 연동 중입니다.")
+      else:
+        st.warning("번호를 입력해 주세요.")
 
   st.markdown("</div>", unsafe_allow_html=True)
 
-  # 3. 컨테이너 CBM 및 체적 간이 계산기 (추가 기능 2)
+  # 3. 컨테이너 CBM 및 체적 간이 계산기
   st.markdown("""
         <div class="card">
             <div class="sub-header">📦 컨테이너 CBM 및 적재율 간이 계산기</div>
@@ -234,9 +240,7 @@ with col_left:
   with c_col4:
     box_qty = st.number_input("총 박스 수량", min_value=1, value=500)
 
-  # CBM 계산: (가로 x 세로 x 높이 / 1,000,000) * 수량
   total_cbm = (box_l * box_w * box_h / 1000000.0) * box_qty
-  # 20ft 기준 적재 한계 약 28 CBM, 40ft 기준 약 58 CBM 가정
   fill_20ft = (total_cbm / 28.0) * 100
   fill_40ft = (total_cbm / 58.0) * 100
 
