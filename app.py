@@ -1,4 +1,3 @@
-import io
 import urllib.parse
 import feedparser
 import pandas as pd
@@ -23,18 +22,42 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# 세션 상태 초기화 (항만 메모 보드용)
+if "port_memos" not in st.session_state:
+  st.session_state.port_memos = {
+      "부산항": {"status": "🟢 원활", "memo": "정상 하역 작업 진행 중"},
+      "인천항": {"status": "🟢 원활", "memo": "특이사항 없음"},
+      "상하이항": {"status": "⚠️ 혼잡", "memo": "성수기 물동량 집중으로 야드 적체"},
+      "닝보항": {"status": "⚠️ 지연", "memo": "기상 악화로 터미널 일시 정체"},
+  }
+
 # 상단 AFK 시그니처 배너
 st.markdown("""
     <div class="main-header">
         <span>⚡ AFK LOGISTICS INTELLIGENCE DESK</span>
-        <span style="font-size: 13px; background-color: #18181b; color: #ffcc00; padding: 4px 10px; border-radius: 4px;">OPERATIONS DESK v2.0</span>
+        <span style="font-size: 13px; background-color: #18181b; color: #ffcc00; padding: 4px 10px; border-radius: 4px;">OPERATIONS DESK v3.0</span>
     </div>
 """, unsafe_allow_html=True)
 
-# 화면 분할: 좌측(메인 터미널 & 시뮬레이터 & 유틸리티), 우측(퀵링크 & 병목 상태)
+# 화면 분할: 좌측(메인 터미널, 시뮬레이터, CBM 계산기, 가이드, 뉴스), 우측(퀵링크, 선사 트래킹 덱, 항만 메모보드)
 col_left, col_right = st.columns([3, 1])
 
 with col_right:
+  # 1. 글로벌 선사 트래킹 링크 덱 (추가 기능 1)
+  st.markdown(
+      '<div class="card"><div class="sub-header">🌐 글로벌 주요 선사 트래킹</div>',
+      unsafe_allow_html=True,
+  )
+  st.markdown("- [Maersk Tracking](https://www.maersk.com/tracking)")
+  st.markdown("- [MSC Cargo Tracking](https://www.msc.com/en/track-a-shipment)")
+  st.markdown("- [HMM (현대상선)](https://www.hmm21.com)")
+  st.markdown(
+      "- [CMA CGM Tracking](https://www.cma-cgm.com/ebusiness/tracking)"
+  )
+  st.markdown("- [Evergreen Line](https://www.evergreen-line.com)")
+  st.markdown("</div>", unsafe_allow_html=True)
+
+  # 2. 유관기관 퀵링크
   st.markdown(
       '<div class="card"><div class="sub-header">📌 유관기관 퀵링크</div>',
       unsafe_allow_html=True,
@@ -46,13 +69,40 @@ with col_right:
   st.markdown("- [한국해운신문](https://www.maritimepress.co.kr)")
   st.markdown("</div>", unsafe_allow_html=True)
 
+  # 3. 항만 특이사항 실시간 메모 보드 (추가 기능 3)
   st.markdown(
-      '<div class="card"><div class="sub-header">🚦 주요 항만/경로 상태</div>',
+      '<div class="card"><div class="sub-header">📋 당일 항만 실시간 메모보드</div>',
       unsafe_allow_html=True,
   )
-  st.markdown("• **희망봉 우회**: ⚠️ 지연 지속 (+10일)")
-  st.markdown("• **중국 닝보/상하이**: ⚠️ 선적 물량 집중")
-  st.markdown("• **부산항 하역**: 🟢 원활 및 정상")
+  st.markdown(
+      '<p style="font-size: 12px; color: #71717a;">팀원 누구나 현장 특이사항을'
+      " 업데이트할 수 있습니다.</p>",
+      unsafe_allow_html=True,
+  )
+
+  selected_port = st.selectbox(
+      "대상 항만 선택", list(st.session_state.port_memos.keys())
+  )
+  new_status = st.selectbox(
+      "상태", ["🟢 원활", "⚠️ 혼잡", "⚠️ 지연", "❌ 마비/중단"]
+  )
+  new_memo = st.text_input("특이사항 메모 입력", value="")
+
+  if st.button("항만 현황 업데이트", use_container_width=True):
+    st.session_state.port_memos[selected_port] = {
+        "status": new_status,
+        "memo": new_memo if new_memo else "특이사항 없음",
+    }
+    st.success(f"{selected_port} 현황이 갱신되었습니다!")
+
+  st.markdown("---")
+  # 현재 등록된 항만 상태 요약 표시
+  for port, info in st.session_state.port_memos.items():
+    st.markdown(
+        f"• **{port}**: {info['status']} <br><span"
+        f" style='font-size:12px; color:#52525b;'>({info['memo']})</span>",
+        unsafe_allow_html=True,
+    )
   st.markdown("</div>", unsafe_allow_html=True)
 
 with col_left:
@@ -60,6 +110,13 @@ with col_left:
   st.markdown(
       '<div class="card"><div class="sub-header">📊 실시간 물류 마켓 지표'
       " & 리스크 알림판</div>",
+      unsafe_allow_html=True,
+  )
+  st.markdown(
+      '<p style="font-size: 13px; color: #52525b; margin-bottom: 12px;">💡'
+      " <b>환율 리스크 기준 안내</b>: 수입 원가 손익분기 및 최근 환율"
+      " 변동성을 고려하여 <b>1,350원</b>을 적정 기준선(Threshold)으로"
+      " 관리합니다.</p>",
       unsafe_allow_html=True,
   )
 
@@ -97,27 +154,26 @@ with col_left:
     df_indicators = pd.DataFrame(data_list)
     st.dataframe(df_indicators, use_container_width=True, hide_index=True)
 
-    # 🚨 리스크 임계값 알림 로직 (오타 수정 완료)
     if fx_current > 0:
       if fx_current >= 1350:
         st.markdown(
-            f'<div class="alert-box">🚨 [리스크 경보] 현재 원/달러 환율({fx_current:.2f}원)이 고환율 임계치(1,350원)를 상회합니다. 수입 대금 결제 타이밍을 면밀히 검토하세요!</div>',
+            f'<div class="alert-box">🚨 [환율 경보] 현재 원/달러 환율({fx_current:.2f}원)이 적정 기준선(1,350원)을 초과했습니다. 수입 대금 결제 시 주의가 필요합니다.</div>',
             unsafe_allow_html=True,
         )
       else:
         st.markdown(
-            f'<div class="safe-box">✨ [정상 안정] 현재 환율({fx_current:.2f}원)은 안정권 내에 있습니다.</div>',
+            f'<div class="safe-box">✨ [환율 안정] 현재 원/달러 환율({fx_current:.2f}원)은 적정 기준선(1,350원) 미만으로 안정권입니다.</div>',
             unsafe_allow_html=True,
         )
 
   st.markdown("</div>", unsafe_allow_html=True)
 
-  # 2. 실무 물류비 변동 시뮬레이터 & 엑셀 다운로드
+  # 2. 실무 물류비 변동 심플 시뮬레이터
   st.markdown("""
         <div class="card">
-            <div class="sub-header">🧮 실무 물류비 변동 심플 시뮬레이터 & 보고서 추출</div>
+            <div class="sub-header">🧮 실무 물류비 변동 심플 시뮬레이터</div>
             <p style="font-size: 13px; color: #52525b; margin-bottom: 15px;">
-            환율 및 운임 변동에 따른 비용 증감을 확인하고, 결과를 엑셀 파일로 바로 다운로드하여 주간 보고에 활용하세요.
+            환율과 해상 운임 변동에 따른 비용 증감을 직관적으로 계산합니다.
             </p>
     """, unsafe_allow_html=True)
 
@@ -128,7 +184,7 @@ with col_left:
     )
   with s_col2:
     fx_inc = st.slider(
-        "환율 상승 폭 (%)", min_value=-10.0, max_value=20.0, value=3.0, step=0.5
+        "환율 상승 폭 (%)", min_value=-10.0, max_value=20.0, value=0.0, step=0.5
     )
   with s_col3:
     freight_inc = st.slider(
@@ -139,8 +195,8 @@ with col_left:
         step=0.5,
     )
 
-  added_cost_fx = base_budget * (fx_inc / 100.0) * 0.7
-  added_cost_freight = base_budget * (freight_inc / 100.0) * 0.3
+  added_cost_fx = base_budget * (fx_inc / 100.0) * 0.5
+  added_cost_freight = base_budget * (freight_inc / 100.0) * 0.5
   total_added = added_cost_fx + added_cost_freight
   final_budget = base_budget + total_added
 
@@ -153,42 +209,52 @@ with col_left:
     )
   with m_col2:
     st.info(
-        f"💡 환율 {fx_inc}%·운임 {freight_inc}% 변동 시 총"
-        f" **{total_added:,.1f}만원** 증감 발생"
+        f"💡 환율 {fx_inc}%·운임 {freight_inc}% 변동 시, 당사 포트폴리오 기준"
+        f" 총 **{total_added:,.1f}만원**의 증감이 발생합니다."
     )
-
-  # 📥 엑셀 다운로드 버튼 구현
-  sim_result_df = pd.DataFrame([{
-      "기준 월 물류비(만원)": base_budget,
-      "환율 변동률(%)": fx_inc,
-      "운임 변동률(%)": freight_inc,
-      "예상 증감액(만원)": round(total_added, 1),
-      "조정 후 총 물류비(만원)": round(final_budget, 1),
-  }])
-
-
-  def convert_df_to_excel(df):
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine="openpyxl") as writer:
-      df.to_excel(writer, index=False, sheet_name="Simulation_Report")
-    return output.getvalue()
-
-
-  excel_data = convert_df_to_excel(sim_result_df)
-
-  st.download_button(
-      label="📥 시뮬레이션 결과 엑셀 보고서 다운로드 (.xlsx)",
-      data=excel_data,
-      file_name="AFK_Logistics_Simulation_Report.xlsx",
-      mime=(
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-      ),
-      use_container_width=True,
-  )
 
   st.markdown("</div>", unsafe_allow_html=True)
 
-  # 3. 실무 용어 & 인코텀즈 가이드 탭
+  # 3. 컨테이너 CBM 및 체적 간이 계산기 (추가 기능 2)
+  st.markdown("""
+        <div class="card">
+            <div class="sub-header">📦 컨테이너 CBM 및 적재율 간이 계산기</div>
+            <p style="font-size: 13px; color: #52525b; margin-bottom: 15px;">
+            화물 박스의 규격과 수량을 입력하여 총 CBM을 산출하고, 20ft/40ft 컨테이너 적재 참고 비율을 확인하세요.
+            </p>
+    """, unsafe_allow_html=True)
+
+  c_col1, c_col2, c_col3, c_col4 = st.columns(4)
+  with c_col1:
+    box_l = st.number_input("가로 (cm)", min_value=1.0, value=50.0)
+  with c_col2:
+    box_w = st.number_input("세로 (cm)", min_value=1.0, value=40.0)
+  with c_col3:
+    box_h = st.number_input("높이 (cm)", min_value=1.0, value=30.0)
+  with c_col4:
+    box_qty = st.number_input("총 박스 수량", min_value=1, value=500)
+
+  # CBM 계산: (가로 x 세로 x 높이 / 1,000,000) * 수량
+  total_cbm = (box_l * box_w * box_h / 1000000.0) * box_qty
+  # 20ft 기준 적재 한계 약 28 CBM, 40ft 기준 약 58 CBM 가정
+  fill_20ft = (total_cbm / 28.0) * 100
+  fill_40ft = (total_cbm / 58.0) * 100
+
+  res_c1, res_c2, res_c3 = st.columns(3)
+  with res_c1:
+    st.metric(label="총 화물 체적 (CBM)", value=f"{total_cbm:,.2f} CBM")
+  with res_c2:
+    st.metric(
+        label="20ft 컨테이너 기준 적재율", value=f"{fill_20ft:,.1f}%"
+    )
+  with res_c3:
+    st.metric(
+        label="40ft 컨테이너 기준 적재율", value=f"{fill_40ft:,.1f}%"
+    )
+
+  st.markdown("</div>", unsafe_allow_html=True)
+
+  # 4. 실무 용어 & 인코텀즈 가이드 탭
   st.markdown("""
         <div class="card">
             <div class="sub-header">📚 AFK 실무 물류/무역 가이드 덱</div>
@@ -233,7 +299,7 @@ with col_left:
 
   st.markdown("</div>", unsafe_allow_html=True)
 
-  # 4. 실시간 뉴스 헤드라인 (원문 다이렉트)
+  # 5. 실시간 뉴스 헤드라인 (원문 다이렉트)
   st.markdown("""
         <div class="card">
             <div class="sub-header">🚨 실시간 물류·해운 이슈 헤드라인 (원문 연결)</div>
