@@ -20,45 +20,45 @@ st.markdown("""
 
 # 상단 타이틀 영역
 st.markdown('<p class="main-title">🚢 Global Supply Chain & Logistics Intelligence</p>', unsafe_allow_html=True)
-st.markdown('<p class="sub-title">실시간 물류 운임, 환율, 원자재 마켓 동향 및 핵심 업계 인텔리전스 터미널</p>', unsafe_allow_html=True)
+st.markdown('<p class="sub-title">실시간 물류 운임, 환율, 원자재 마켓 동향 및 국내외 핵심 기관 인텔리전스 터미널</p>', unsafe_allow_html=True)
 st.divider()
 
-# 화면 분할: 좌측(대시보드 및 레포트), 우측(주요 뉴스 탑 5 고정 패널)
+# 화면 분할: 좌측(대시보드 및 레포트), 우측(국내 주요 기관 뉴스 및 링크 탑 5 고정 패널)
 col_left, col_right = st.columns([3, 1])
 
 with col_right:
-    st.markdown("### 🔥 실시간 주요 물류 뉴스 TOP 5")
+    st.markdown("### 🔥 국내 주요 물류·무역 소스 TOP 5")
     st.markdown('<div class="news-box">', unsafe_allow_html=True)
     
-    # 주요 뉴스 링크 리스트 (실무용 주요 매체 및 공신력 있는 링크 연결)
+    # 국내 공신력 있는 물류/무역 기관 및 전문 매체 링크
     news_items = [
-        {"title": "1. 상하이컨테이너운임지수(SCFI) 반등세 전환", "url": "https://www.shippingazette.com"},
-        {"title": "2. 파나마 운하 통항량 제한 완화 조치 발표", "url": "https://www.reuters.com"},
-        {"title": "3. 주요 선사들 아시아-유럽 노선 운임 인상 예고", "url": "https://gcaptain.com"},
-        {"title": "4. 글로벌 항만 적체 현황 및 물류 대란 리스크 점검", "url": "https://www.lloydslist.com"},
-        {"title": "5. 친환경 선박 연료 규제 강화에 따른 해운업계 영향", "url": "https://www.tradewindsnews.com"}
+        {"title": "1. 한국무역협회 (KITA) 무역뉴스", "url": "https://www.kita.net"},
+        {"title": "2. 해양수산부 보도자료 및 정책", "url": "https://www.mof.go.kr"},
+        {"title": "3. 한국해양수산개발원 (KMI) 동향", "url": "https://www.kmi.re.kr"},
+        {"title": "4. 물류신문 (전문 물류 뉴스)", "url": "https://www.klnews.co.kr"},
+        {"title": "5. 한국해운신문 (해운항만 정보)", "url": "https://www.maritimepress.co.kr"}
     ]
     
     for item in news_items:
-      st.markdown(f"- [{item['title']}]({item['url']})")
+        st.markdown(f"- [{item['title']}]({item['url']})")
         
     st.markdown('</div>', unsafe_allow_html=True)
     
     st.markdown("---")
     st.markdown("### 📌 Quick Links")
-    st.markdown("- [블룸버그 마켓](https://www.bloomberg.com)")
-    st.markdown("- [야후 파이낸스](https://finance.yahoo.com)")
-    st.markdown("- [해운물류정보공식포털](https://www.portmis.go.kr)")
+    st.markdown("- [관세무역데이터 (TRADES)]({https://www.customs.go.kr})")
+    st.markdown("- [한국은행 경제통계시스템](https://ecos.bok.or.kr)")
+    st.markdown("- [포트미스(PORT-MIS) 항만물류](https://www.portmis.go.kr)")
 
 with col_left:
     st.markdown("### 📊 핵심 물류 지표 & 매크로 터미널 (Real-time)")
     
-    # 야후 파이낸스를 통한 실시간 데이터 로드 (환율, 원유, 금속 등 물류 연동 지표)
+    # 야후 파이낸스를 통한 실시간 데이터 로드
     tickers = {
         "WTI 원유 (해운 연료비 연동)": "CL=F",
         "USD/KRW (원/달러 환율)": "KRW=X",
-        "Drewry 상하이-LA 운임(추정)": "BDRY", # 해운 ETF 지표 대체 예시
-        "Copper (컨테이너/제조 원자재)": "HG=F"
+        "BDRY (글로벌 해운 운임 ETF)": "BDRY",
+        "Copper (제조 및 물류 원자재)": "HG=F"
     }
     
     data_list = []
@@ -83,25 +83,23 @@ with col_left:
         st.dataframe(df_indicators, use_container_width=True, hide_index=True)
     
     st.markdown("---")
-    st.markdown("### 📑 주간 물류 시장 동향 및 리포트 요약")
+    st.markdown("### 📑 주간 물류 시장 동향 및 레포트 요약")
     
     # 탭으로 상세 레포트 구성
     tab1, tab2, tab3 = st.tabs(["🚢 해운 및 운임 동향", "🛢️ 원자재 및 공급망 이슈", "💡 자재구매팀 인사이트"])
     
     with tab1:
         st.markdown("#### [Weekly Briefing] 해운 시장 및 컨테이너 운임 분석")
-        st.write("• 최근 글로벌 주요 항만의 하역 효율성이 개선되고 있으나, 지정학적 리스크로 인한 우회 노선 운항이 지속되며 톤마일(Ton-mile) 수요가 증가하고 있습니다.")
-        st.write("• 상세 분석 보고서 원문은 아래 링크를 참조하세요.")
-        st.markdown("[🔗 해운 시장 전문 리포트 읽기 (외부 링크)](https://www.hellenicshippingnews.com)")
+        st.write("• 국내외 해운 선사들의 노선 재편 및 주요 허브 항만 체선 상황을 주기적으로 모니터링해야 합니다.")
+        st.write("• 상세한 국내 수출입 물류 통계는 우측의 **한국무역협회 및 해양수산부** 링크를 통해 원문을 확인하실 수 있습니다.")
         
     with tab2:
-        st.markdown("#### [Supply Chain] 주요 원자재 및 에너지 수급 이슈")
-        st.write("• 유가 변동성에 따른 선박 연료비(Bunker Surcharge) 추이가 안정세와 변동성을 오가고 있습니다.")
-        st.write("• 주요 비철금속(구리, 알루미늄 등)의 재고량 추이에 따른 제조 원가 압박 요인을 모니터링 중입니다.")
-        st.markdown("[🔗 글로벌 공급망 리스크 센터 바로가기](https://www.freightwaves.com)")
+        st.markdown("#### [Supply Chain] 주요 원자재 및 수급 이슈")
+        st.write("• 원/달러 환율 변동성에 따른 수입 원가 압박과 해상 운임(SCFI/BDI 등)의 연동 효과를 점검 중입니다.")
+        st.write("• 글로벌 공급망 리스크 변동에 따른 안전재고 확보 전략 검토가 요구됩니다.")
         
     with tab3:
         st.markdown("#### [Action Item] 자재구매팀 시사점")
-        st.write("1. 환율(USD/KRW) 변동폭 확대에 따른 수입 원가 헤징 전략 수립 필요")
-        st.write("2. 해상 운임 스팟(Spot) 요율 변동에 따른 장기 계약(SC) 갱신 시기 조율")
-        st.write("3. 주요 원자재 수급 차질 대비 안전재고 수준 재점검")
+        st.write("1. 환율(USD/KRW) 변동폭 확대에 따른 수입 대금 결제 타이밍 점검")
+        st.write("2. 주요 항만 물류 정체 상황에 따른 리드타임(Lead Time) 여유분 확보")
+        st.write("3. 핵심 자재 품목별 단가 추이 모니터링 및 구매 계약 갱신 대응")
