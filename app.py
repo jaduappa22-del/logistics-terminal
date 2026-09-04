@@ -41,11 +41,11 @@ if "team_quick_memos" not in st.session_state:
 st.markdown("""
     <div class="main-header">
         <span>⚡ AFK LOGISTICS INTELLIGENCE DESK</span>
-        <span style="font-size: 13px; background-color: #18181b; color: #ffcc00; padding: 4px 10px; border-radius: 4px;">OPERATIONS DESK v3.1</span>
+        <span style="font-size: 13px; background-color: #18181b; color: #ffcc00; padding: 4px 10px; border-radius: 4px;">OPERATIONS DESK v3.2</span>
     </div>
 """, unsafe_allow_html=True)
 
-# 화면 분할: 좌측(메인 터미널, CBM 계산기, 가이드, 뉴스), 우측(퀵링크, 선사 트래킹, 항만 메모, 팀 퀵 메모)
+# 화면 분할: 좌측(메인 터미널, 실시간 뉴스, 트래킹, CBM 계산기, 가이드), 우측(퀵링크, 선사 트래킹, 항만 메모, 팀 퀵 메모)
 col_left, col_right = st.columns([3, 1])
 
 with col_right:
@@ -104,7 +104,7 @@ with col_right:
     )
   st.markdown("</div>", unsafe_allow_html=True)
 
-  # 4. 물류팀 전용 사내 퀵 메모장 (추가 기능)
+  # 4. 물류팀 전용 사내 퀵 메모장
   st.markdown(
       '<div class="card"><div class="sub-header">📝 물류팀 퀵 메모장</div>',
       unsafe_allow_html=True,
@@ -192,7 +192,49 @@ with col_left:
 
   st.markdown("</div>", unsafe_allow_html=True)
 
-  # 2. 글로벌 선박 위치 트랙킹 레이더 위젯 (추가 기능 1)
+  # 2. 🚨 실시간 뉴스 헤드라인 (마켓 지표 바로 아래로 전진 배치)
+  st.markdown("""
+        <div class="card">
+            <div class="sub-header">🚨 실시간 물류·해운 이슈 헤드라인 (원문 연결)</div>
+    """, unsafe_allow_html=True)
+
+
+  @st.cache_data(ttl=600)
+  def get_logistics_news():
+    try:
+      raw_query = "해운 운임 선박 항만 물류"
+      encoded_query = urllib.parse.quote(raw_query)
+      rss_url = (
+          f"https://news.google.com/rss/search?q={encoded_query}&hl=ko&gl=KR&ceid=KR:ko"
+      )
+      feed = feedparser.parse(rss_url)
+      articles = []
+      for entry in feed.entries[:5]:
+        articles.append({"title": entry.title, "url": entry.link})
+      return articles
+    except:
+      return []
+
+
+  live_news = get_logistics_news()
+
+  if live_news:
+    for idx, article in enumerate(live_news, 1):
+      st.markdown(
+          f"""
+            <div class="headline-box">
+                <b>📰 실시간 이슈 {idx}</b><br>
+                👉 <a href="{article['url']}" target="_blank" style="text-decoration: none; font-size: 14px; font-weight: 600; color: #002855;">{article['title']}</a>
+            </div>
+            """,
+          unsafe_allow_html=True,
+      )
+  else:
+    st.info("실시간 기사를 불러오는 중입니다.")
+
+  st.markdown("</div>", unsafe_allow_html=True)
+
+  # 3. 글로벌 선박 위치 트랙킹 레이더 위젯
   st.markdown("""
         <div class="card">
             <div class="sub-header">🛰️ 글로벌 선박 및 컨테이너 트랙킹 퀵 레이더</div>
@@ -221,7 +263,7 @@ with col_left:
 
   st.markdown("</div>", unsafe_allow_html=True)
 
-  # 3. 컨테이너 CBM 및 체적 간이 계산기
+  # 4. 컨테이너 CBM 및 체적 간이 계산기
   st.markdown("""
         <div class="card">
             <div class="sub-header">📦 컨테이너 CBM 및 적재율 간이 계산기</div>
@@ -258,7 +300,7 @@ with col_left:
 
   st.markdown("</div>", unsafe_allow_html=True)
 
-  # 4. 실무 용어 & 인코텀즈 가이드 탭
+  # 5. 실무 용어 & 인코텀즈 가이드 탭
   st.markdown("""
         <div class="card">
             <div class="sub-header">📚 AFK 실무 물류/무역 가이드 덱</div>
@@ -300,47 +342,5 @@ with col_left:
         "2. **유럽/미주 아시아발**: 희망봉 우회 노선 상시화로 기존 대비 해상"
         " 운송 리드타임 +10~14일 여유 산정 필수"
     )
-
-  st.markdown("</div>", unsafe_allow_html=True)
-
-  # 5. 실시간 뉴스 헤드라인 (원문 다이렉트)
-  st.markdown("""
-        <div class="card">
-            <div class="sub-header">🚨 실시간 물류·해운 이슈 헤드라인 (원문 연결)</div>
-    """, unsafe_allow_html=True)
-
-
-  @st.cache_data(ttl=600)
-  def get_logistics_news():
-    try:
-      raw_query = "해운 운임 선박 항만 물류"
-      encoded_query = urllib.parse.quote(raw_query)
-      rss_url = (
-          f"https://news.google.com/rss/search?q={encoded_query}&hl=ko&gl=KR&ceid=KR:ko"
-      )
-      feed = feedparser.parse(rss_url)
-      articles = []
-      for entry in feed.entries[:5]:
-        articles.append({"title": entry.title, "url": entry.link})
-      return articles
-    except:
-      return []
-
-
-  live_news = get_logistics_news()
-
-  if live_news:
-    for idx, article in enumerate(live_news, 1):
-      st.markdown(
-          f"""
-            <div class="headline-box">
-                <b>📰 실시간 이슈 {idx}</b><br>
-                👉 <a href="{article['url']}" target="_blank" style="text-decoration: none; font-size: 14px; font-weight: 600; color: #002855;">{article['title']}</a>
-            </div>
-            """,
-          unsafe_allow_html=True,
-      )
-  else:
-    st.info("실시간 기사를 불러오는 중입니다.")
 
   st.markdown("</div>", unsafe_allow_html=True)
