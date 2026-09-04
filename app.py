@@ -1,3 +1,4 @@
+import io
 import urllib.parse
 import feedparser
 import pandas as pd
@@ -6,29 +7,31 @@ import yfinance as yf
 
 # 페이지 설정 (와이드 모드)
 st.set_page_config(
-    page_title="DHL Logistics Operations Terminal", page_icon="📦", layout="wide"
+    page_title="AFK Logistics Intelligence Desk", page_icon="⚡", layout="wide"
 )
 
-# DHL 스타일 커스텀 CSS (강렬한 옐로우/오렌지 포인트, 뛰어난 가독성)
+# 커스텀 CSS (DHL 스타일 포인트 + 가독성 최적화)
 st.markdown("""
     <style>
     .stApp { background-color: #f4f4f5; color: #18181b; }
     .main-header { background-color: #ffcc00; padding: 20px; border-radius: 6px; color: #d40511; font-weight: 900; font-size: 24px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
     .card { background-color: #ffffff; padding: 20px; border-radius: 8px; border: 1px solid #e4e4e7; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 15px; }
     .sub-header { font-size: 16px; font-weight: 700; color: #d40511; margin-bottom: 10px; }
-    .headline-item { background-color: #ffffff; padding: 12px 15px; border-radius: 6px; border-left: 4px solid #d40511; border-top: 1px solid #e4e4e7; border-right: 1px solid #e4e4e7; border-bottom: 1px solid #e4e4e7; margin-bottom: 8px; }
+    .headline-box { background-color: #fafafa; padding: 12px 15px; border-radius: 6px; border-left: 4px solid #d40511; border: 1px solid #e4e4e7; margin-bottom: 8px; }
+    .alert-box { background-color: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 12px; border-radius: 6px; margin-bottom: 15px; font-weight: 600; }
+    .safe-box { background-color: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 12px; border-radius: 6px; margin-bottom: 15px; font-weight: 600; }
     </style>
 """, unsafe_allow_html=True)
 
-# DHL 시그니처 상단 배너
+# 상단 AFK 시그니처 배너
 st.markdown("""
     <div class="main-header">
-        <span>📦 DHL LOGISTICS OPERATIONS TERMINAL</span>
-        <span style="font-size: 14px; background-color: #18181b; color: #ffcc00; padding: 4px 10px; border-radius: 4px;">TEAM DAILY DESK</span>
+        <span>⚡ AFK LOGISTICS INTELLIGENCE DESK</span>
+        <span style="font-size: 13px; background-color: #18181b; color: #ffcc00; padding: 4px 10px; border-radius: 4px;">OPERATIONS DESK v2.0</span>
     </div>
 """, unsafe_allow_html=True)
 
-# 화면 분할: 좌측(실무 지표 & 시뮬레이터 & 뉴스), 우측(빠른 유관기관 링크)
+# 화면 분할: 좌측(메인 터미널 & 시뮬레이터 & 유틸리티), 우측(퀵링크 & 병목 상태)
 col_left, col_right = st.columns([3, 1])
 
 with col_right:
@@ -53,10 +56,10 @@ with col_right:
   st.markdown("</div>", unsafe_allow_html=True)
 
 with col_left:
-  # 1. 실시간 매크로 지표
+  # 1. 실시간 매크로 지표 및 위험 경보 (추가 기능 1)
   st.markdown(
       '<div class="card"><div class="sub-header">📊 실시간 물류 마켓 지표'
-      " (Real-time)</div>",
+      " & 리스크 알림판</div>",
       unsafe_allow_html=True,
   )
 
@@ -68,6 +71,8 @@ with col_left:
   }
 
   data_list = []
+  fx_current = 0.0
+
   for name, ticker in tickers.items():
     try:
       t = yf.Ticker(ticker)
@@ -76,6 +81,10 @@ with col_left:
         current_price = hist["Close"].iloc[-1]
         prev_price = hist["Close"].iloc[-2]
         change = ((current_price - prev_price) / prev_price) * 100
+
+        if "USD/KRW" in name:
+          fx_current = current_price
+
         data_list.append({
             "지표 항목": name,
             "현재 시세": round(current_price, 2),
@@ -87,21 +96,38 @@ with col_left:
   if data_list:
     df_indicators = pd.DataFrame(data_list)
     st.dataframe(df_indicators, use_container_width=True, hide_index=True)
+
+    # 🚨 리스크 임계값 알림 로직 (예: 환율이 1,350원 이상이거나 체크 포인트 연동)
+    if fx_current > 0:
+      if fx_current >= 1350:
+        st.markdown(
+            f'<div class="alert-box">🚨 [리스크 경보] 현재 원/달러 환율({fx_current:.2f}원)'
+            "이 고환율 임계치(1,350원)를 상회합니다. 수입 대금 결제 타이밍을"
+            " 면밀히 검토하세요!</div>",
+            unsafe_allow_html=True,
+        )
+      else:
+        st.markdown(
+            f'<div class="safe-box">✨ [정상 안정] 현재 환율({fx_current:.2f}원)'
+            "은 안정권 내에 있습니다.</div>',
+            unsafe_allow_html=True,
+        )
+
   st.markdown("</div>", unsafe_allow_html=True)
 
-  # 2. 물류팀 실무형 비용 변동 시뮬레이터 (수식 직관성 개선)
+  # 2. 실무 물류비 변동 시뮬레이터 & 엑셀 다운로드 (추가 기능 3)
   st.markdown("""
         <div class="card">
-            <div class="sub-header">🧮 실무 물류비 변동 심플 시뮬레이터</div>
+            <div class="sub-header">🧮 실무 물류비 변동 심플 시뮬레이터 & 보고서 추출</div>
             <p style="font-size: 13px; color: #52525b; margin-bottom: 15px;">
-            환율과 해상 운임이 변동할 때, 우리 팀의 월간 물류비(예: 1억원 기준)가 실제로 얼마나 증감하는지 직관적으로 계산합니다.
+            환율 및 운임 변동에 따른 비용 증감을 확인하고, 결과를 엑셀 파일로 바로 다운로드하여 주간 보고에 활용하세요.
             </p>
     """, unsafe_allow_html=True)
 
   s_col1, s_col2, s_col3 = st.columns(3)
   with s_col1:
     base_budget = st.number_input(
-        "기준 월 물류비 (만원)", min_value=100, max_value=100000, value=10000
+        "기준 월 물류비 (만원)", min_value=100, max_value=1000000, value=10000
     )
   with s_col2:
     fx_inc = st.slider(
@@ -116,7 +142,6 @@ with col_left:
         step=0.5,
     )
 
-  # 정확하고 직관적인 계산식 (환율 영향 70%, 운임 영향 30% 반영)
   added_cost_fx = base_budget * (fx_inc / 100.0) * 0.7
   added_cost_freight = base_budget * (freight_inc / 100.0) * 0.3
   total_added = added_cost_fx + added_cost_freight
@@ -131,13 +156,87 @@ with col_left:
     )
   with m_col2:
     st.info(
-        f"💡 **분석 요약**: 환율 {fx_inc}% 및 운임 {freight_inc}% 변동 시, 총"
-        f" **{total_added:,.1f}만원**의 비용 증감이 발생합니다."
+        f"💡 환율 {fx_inc}%·운임 {freight_inc}% 변동 시 총"
+        f" **{total_added:,.1f}만원** 증감 발생"
+    )
+
+  # 📥 엑셀 다운로드 버튼 구현
+  sim_result_df = pd.DataFrame([{
+      "기준 월 물류비(만원)": base_budget,
+      "환율 변동률(%)": fx_inc,
+      "운임 변동률(%)": freight_inc,
+      "예상 증감액(만원)": round(total_added, 1),
+      "조정 후 총 물류비(만원)": round(final_budget, 1),
+  }])
+
+
+  def convert_df_to_excel(df):
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+      df.to_excel(writer, index=False, sheet_name="Simulation_Report")
+    return output.getvalue()
+
+
+  excel_data = convert_df_to_excel(sim_result_df)
+
+  st.download_button(
+      label="📥 시뮬레이션 결과 엑셀 보고서 다운로드 (.xlsx)",
+      data=excel_data,
+      file_name="AFK_Logistics_Simulation_Report.xlsx",
+      mime=(
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      ),
+      use_container_width=True,
+  )
+
+  st.markdown("</div>", unsafe_allow_html=True)
+
+  # 3. 실무 용어 & 인코텀즈 가이드 탭 (추가 기능 2)
+  st.markdown("""
+        <div class="card">
+            <div class="sub-header">📚 AFK 실무 물류/무역 가이드 덱</div>
+    """, unsafe_allow_html=True)
+
+  tab_g1, tab_g2, tab_g3 = st.tabs(
+      ["📦 주요 인코텀즈(Incoterms)", "📐 컨테이너 규격 상식", "💡 구매팀 리드타임 팁"]
+  )
+
+  with tab_g1:
+    st.markdown(
+        "**FOB (Free On Board)**: 선측 인도 조건. 수출자가 선박에 화물을 실을"
+        " 때까지의 비용과 위험을 부담."
+    )
+    st.markdown(
+        "**CIF (Cost, Insurance and Freight)**: 운임·보험료 도지 인도 조건."
+        " 수입항까지의 운임과 보험료를 수출자가 부담."
+    )
+    st.markdown(
+        "**EXW (Ex Works)**: 공장 인도 조건. 구매자가 공장 출고부터 모든"
+        " 비용과 위험을 부담."
+    )
+
+  with tab_g2:
+    st.markdown(
+        "**20ft 컨테이너 (TEU)**: 최대 적재 중량 약 21~24톤 / CBM 약 28~30"
+    )
+    st.markdown(
+        "**40ft 컨테이너 (FEU)**: 최대 적재 중량 약 26~29톤 / CBM 약 58~68"
+    )
+    st.markdown("*(※ 화물의 성상 및 포장 형태에 따라 실제 적재량은 상이)*")
+
+  with tab_g3:
+    st.markdown(
+        "1. **중국발 화물**: 선적 기항지 스케줄 변동이 잦으므로 마감일 기준"
+        " 최소 3일 전 부킹 완료 권장"
+    )
+    st.markdown(
+        "2. **유럽/미주 아시아발**: 희망봉 우회 노선 상시화로 기존 대비 해상"
+        " 운송 리드타임 +10~14일 여유 산정 필수"
     )
 
   st.markdown("</div>", unsafe_allow_html=True)
 
-  # 3. 실시간 뉴스 헤드라인 (원문 다이렉트)
+  # 4. 실시간 뉴스 헤드라인 (원문 다이렉트)
   st.markdown("""
         <div class="card">
             <div class="sub-header">🚨 실시간 물류·해운 이슈 헤드라인 (원문 연결)</div>
@@ -167,7 +266,7 @@ with col_left:
     for idx, article in enumerate(live_news, 1):
       st.markdown(
           f"""
-            <div class="headline-box" style="background-color: #fafafa; padding: 10px; border-radius: 6px; border-left: 3px solid #d40511; margin-bottom: 8px;">
+            <div class="headline-box">
                 <b>📰 실시간 이슈 {idx}</b><br>
                 👉 <a href="{article['url']}" target="_blank" style="text-decoration: none; font-size: 14px; font-weight: 600; color: #002855;">{article['title']}</a>
             </div>
