@@ -56,7 +56,7 @@ with col_right:
   st.markdown("</div>", unsafe_allow_html=True)
 
 with col_left:
-  # 1. 실시간 매크로 지표 및 위험 경보 (추가 기능 1)
+  # 1. 실시간 매크로 지표 및 위험 경보
   st.markdown(
       '<div class="card"><div class="sub-header">📊 실시간 물류 마켓 지표'
       " & 리스크 알림판</div>",
@@ -97,25 +97,22 @@ with col_left:
     df_indicators = pd.DataFrame(data_list)
     st.dataframe(df_indicators, use_container_width=True, hide_index=True)
 
-    # 🚨 리스크 임계값 알림 로직 (예: 환율이 1,350원 이상이거나 체크 포인트 연동)
+    # 🚨 리스크 임계값 알림 로직 (오타 수정 완료)
     if fx_current > 0:
       if fx_current >= 1350:
         st.markdown(
-            f'<div class="alert-box">🚨 [리스크 경보] 현재 원/달러 환율({fx_current:.2f}원)'
-            "이 고환율 임계치(1,350원)를 상회합니다. 수입 대금 결제 타이밍을"
-            " 면밀히 검토하세요!</div>",
+            f'<div class="alert-box">🚨 [리스크 경보] 현재 원/달러 환율({fx_current:.2f}원)이 고환율 임계치(1,350원)를 상회합니다. 수입 대금 결제 타이밍을 면밀히 검토하세요!</div>',
             unsafe_allow_html=True,
         )
       else:
         st.markdown(
-            f'<div class="safe-box">✨ [정상 안정] 현재 환율({fx_current:.2f}원)'
-            "은 안정권 내에 있습니다.</div>',
+            f'<div class="safe-box">✨ [정상 안정] 현재 환율({fx_current:.2f}원)은 안정권 내에 있습니다.</div>',
             unsafe_allow_html=True,
         )
 
   st.markdown("</div>", unsafe_allow_html=True)
 
-  # 2. 실무 물류비 변동 시뮬레이터 & 엑셀 다운로드 (추가 기능 3)
+  # 2. 실무 물류비 변동 시뮬레이터 & 엑셀 다운로드
   st.markdown("""
         <div class="card">
             <div class="sub-header">🧮 실무 물류비 변동 심플 시뮬레이터 & 보고서 추출</div>
@@ -191,7 +188,7 @@ with col_left:
 
   st.markdown("</div>", unsafe_allow_html=True)
 
-  # 3. 실무 용어 & 인코텀즈 가이드 탭 (추가 기능 2)
+  # 3. 실무 용어 & 인코텀즈 가이드 탭
   st.markdown("""
         <div class="card">
             <div class="sub-header">📚 AFK 실무 물류/무역 가이드 덱</div>
