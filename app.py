@@ -40,7 +40,7 @@ with col_right:
     ]
     
     for item in news_items:
-        st.markdown(f"- [{item['title']}]({item['url'])")
+      st.markdown(f"- [{item['title']}]({item['url']})")
         
     st.markdown('</div>', unsafe_allow_html=True)
     
