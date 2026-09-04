@@ -1,4 +1,5 @@
-import feedparser  # RSS 리더용 라이브러리
+import urllib.parse
+import feedparser
 import pandas as pd
 import streamlit as st
 import yfinance as yf
@@ -37,9 +38,7 @@ with col_right:
   st.markdown("- [한국무역협회 (KITA)](https://www.kita.net)")
   st.markdown("- [해양수산부](https://www.mof.go.kr)")
   st.markdown("- [한국해양수산개발원](https://www.kmi.re.kr)")
-  st.markdown(
-      "- [물류신문](https://www.klnews.co.kr/news/articleList.html?sc_section_code=S1N9)"
-  )
+  st.markdown("- [물류신문](https://www.klnews.co.kr)")
   st.markdown("- [한국해운신문](https://www.maritimepress.co.kr)")
 
   st.markdown("---")
@@ -88,19 +87,24 @@ with col_left:
   )
 
 
-  # 구글 뉴스 RSS를 활용해 실시간 키워드 기사 가져오기 함수
-  @st.cache_data(ttl=600)  # 10분마다 갱신
+  # 구글 뉴스 RSS 안전하게 가져오기 (URL 인코딩 적용)
+  @st.cache_data(ttl=600)
   def get_logistics_news():
-    # 구글 뉴스 RSS 검색 URL (물류, 해운, 선박 지연 등 핵심 키워드 조합)
-    query = "해운 운임 선박 항만 물류"
-    rss_url = f"https://news.google.com/rss/search?q={query}&hl=ko&gl=KR&ceid=KR:ko"
+    try:
+      raw_query = "해운 운임 선박 항만 물류"
+      encoded_query = urllib.parse.quote(raw_query)
+      rss_url = (
+          f"https://news.google.com/rss/search?q={encoded_query}&hl=ko&gl=KR&ceid=KR:ko"
+      )
 
-    feed = feedparser.parse(rss_url)
-    articles = []
+      feed = feedparser.parse(rss_url)
+      articles = []
 
-    for entry in feed.entries[:6]:  # 상위 6개만 가져오기
-      articles.append({"title": entry.title, "url": entry.link})
-    return articles
+      for entry in feed.entries[:6]:
+        articles.append({"title": entry.title, "url": entry.link})
+      return articles
+    except Exception as e:
+      return []
 
 
   live_news = get_logistics_news()
@@ -117,7 +121,7 @@ with col_left:
           unsafe_allow_html=True,
       )
   else:
-    st.info("현재 실시간 기사를 불러오는 중이거나 네트워크 상태가 원활하지 않습니다.")
+    st.info("현재 실시간 기사를 불러오는 중입니다. 잠시 후 새로고침해 주세요.")
 
   st.markdown("---")
   st.markdown("### 📑 주간 물류 시장 동향 및 자재구매팀 인사이트")
