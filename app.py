@@ -9,16 +9,20 @@ st.set_page_config(
     page_title="AFK Logistics Intelligence Desk", page_icon="⚡", layout="wide"
 )
 
-# 커스텀 CSS (DHL 스타일 포인트 + 가독성 최적화)
+# 커스텀 CSS (DHL 스타일 포인트 + 다크 레이더 존 조화)
 st.markdown("""
     <style>
     .stApp { background-color: #f4f4f5; color: #18181b; }
     .main-header { background-color: #ffcc00; padding: 20px; border-radius: 6px; color: #d40511; font-weight: 900; font-size: 24px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
     .card { background-color: #ffffff; padding: 20px; border-radius: 8px; border: 1px solid #e4e4e7; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 15px; }
+    .radar-card { background-color: #0f172a; color: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin-bottom: 15px; }
     .sub-header { font-size: 16px; font-weight: 700; color: #d40511; margin-bottom: 10px; }
+    .radar-sub-header { font-size: 16px; font-weight: 700; color: #38bdf8; margin-bottom: 10px; }
     .headline-box { background-color: #fafafa; padding: 12px 15px; border-radius: 6px; border-left: 4px solid #d40511; border: 1px solid #e4e4e7; margin-bottom: 8px; }
     .alert-box { background-color: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 12px; border-radius: 6px; margin-bottom: 15px; font-weight: 600; }
     .safe-box { background-color: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 12px; border-radius: 6px; margin-bottom: 15px; font-weight: 600; }
+    .risk-card-red { background-color: #450a0a; border: 1px solid #991b1b; padding: 12px; border-radius: 6px; margin-bottom: 10px; color: #f8fafc; }
+    .risk-card-orange { background-color: #451a03; border: 1px solid #9a3412; padding: 12px; border-radius: 6px; margin-bottom: 10px; color: #f8fafc; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -41,11 +45,11 @@ if "team_quick_memos" not in st.session_state:
 st.markdown("""
     <div class="main-header">
         <span>⚡ AFK LOGISTICS INTELLIGENCE DESK</span>
-        <span style="font-size: 13px; background-color: #18181b; color: #ffcc00; padding: 4px 10px; border-radius: 4px;">OPERATIONS DESK v3.3</span>
+        <span style="font-size: 13px; background-color: #18181b; color: #ffcc00; padding: 4px 10px; border-radius: 4px;">OPERATIONS DESK v4.0</span>
     </div>
 """, unsafe_allow_html=True)
 
-# 화면 분할: 좌측(메인 터미널, 실시간 뉴스, 트래킹, CBM 계산기, 가이드), 우측(퀵링크, 선사 트래킹, 항만 메모, 팀 퀵 메모)
+# 화면 분할: 좌측(메인 터미널 및 하단 레이더), 우측(퀵링크, 선사 트래킹, 항만 메모, 팀 퀵 메모)
 col_left, col_right = st.columns([3, 1])
 
 with col_right:
@@ -300,7 +304,7 @@ with col_left:
 
   st.markdown("</div>", unsafe_allow_html=True)
 
-  # 5. 실무 용어 & 인코텀즈 완벽 가이드 덱 (업데이트 완료)
+  # 5. 실무 용어 & 인코텀즈 완벽 가이드 덱
   st.markdown("""
         <div class="card">
             <div class="sub-header">📚 AFK 실무 물류/무역 가이드 덱</div>
@@ -386,5 +390,104 @@ with col_left:
         "2. **유럽/미주 아시아발**: 희망봉 우회 노선 상시화로 기존 대비 해상"
         " 운송 리드타임 +10~14일 여유 산정 필수"
     )
+
+  st.markdown("</div>", unsafe_allow_html=True)
+
+  # 6. [신규 편입] 글로벌 공급망 지연 & 지오 리스크 레이더 콘솔 (가장 하단 배치)
+  st.markdown("""
+        <div class="radar-card">
+            <div class="radar-sub-header">🚨 AFK GLOBAL SUPPLY CHAIN DELAY & RISK RADAR</div>
+            <p style="font-size: 13px; color: #94a3b8; margin-bottom: 15px;">
+            전 세계 주요 항만 및 거점별 실시간 지연 일수와 원인을 시각적으로 확인하여 물류 리스크에 선제 대응하세요.
+            </p>
+    """, unsafe_allow_html=True)
+
+  port_risk_data = pd.DataFrame({
+      "port": [
+          "상하이항 (중국)",
+          "닝보-주산항 (중국)",
+          "부산항 (한국)",
+          "로스앤젤레스항 (미주)",
+          "로테르담항 (유럽)",
+          "파나마 운하 통항",
+      ],
+      "lat": [31.2304, 29.8683, 35.1796, 33.7420, 51.9244, 9.1000],
+      "lon": [121.4737, 121.5440, 129.0756, -118.2437, 4.4777, -79.7000],
+      "status": ["심각 지연", "지연 주의", "정상 운영", "정상 운영", "혼잡", "통항 제한"],
+      "delay_days": [
+          "+7 ~ 10일",
+          "+3 ~ 5일",
+          "지연 없음",
+          "지연 없음",
+          "+3일",
+          "+14일 우회",
+      ],
+      "reason": [
+          "성수기 물동량 폭증 및 야드 적체율 90% 초과",
+          "국지적 기상 악화(풍랑 경보)로 인한 선적 일시 중단",
+          "부두 하역 및 야드 회전율 원활",
+          "터미널 철도 연계 원활, 대기 시간 단축",
+          "부두 인력 파업 여파 및 하역 장비 점검 지연",
+          "가뭄으로 인한 흘수 제한 및 일일 통항 척수 감축",
+      ],
+      "risk_level": ["red", "orange", "green", "green", "orange", "red"],
+  })
+
+  r_col1, r_col2 = st.columns([2, 1])
+
+  with r_col1:
+    st.markdown(
+        '<p style="font-size: 14px; font-weight: 600; color: #38bdf8;">🗺️ 전 세계'
+        " 주요 거점 리스크 레이더 맵</p>",
+        unsafe_allow_html=True,
+    )
+    st.map(port_risk_data, latitude="lat", longitude="lon", size=60, zoom=1)
+    st.markdown(
+        '<p style="font-size: 11px; color: #94a3b8; margin-top: 8px;">* 붉은색 및'
+        " 주황색 표기 거점은 일정 조율 및 대체 루트 검토가 필요한"
+        " 구간입니다.</p>",
+        unsafe_allow_html=True,
+    )
+
+  with r_col2:
+    st.markdown(
+        '<p style="font-size: 14px; font-weight: 600; color: #f87171;">⚡ 긴급 지연'
+        " 거점 요약</p>",
+        unsafe_allow_html=True,
+    )
+    for _, row in port_risk_data.iterrows():
+      if row["risk_level"] == "red":
+        st.markdown(
+            f"""
+                <div class="risk-card-red">
+                    <b>🔴 {row['port']}</b><br>
+                    <span style="font-size: 12px; color: #fca5a5;">지연: <b>{row['delay_days']}</b></span><br>
+                    <span style="font-size: 11px; color: #cbd5e1;">원인: {row['reason']}</span>
+                </div>
+            """,
+            unsafe_allow_html=True,
+        )
+      elif row["risk_level"] == "orange":
+        st.markdown(
+            f"""
+                <div class="risk-card-orange">
+                    <b>🟠 {row['port']}</b><br>
+                    <span style="font-size: 12px; color: #fdba74;">지연: <b>{row['delay_days']}</b></span><br>
+                    <span style="font-size: 11px; color: #cbd5e1;">원인: {row['reason']}</span>
+                </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+  st.markdown(
+      '<p style="font-size: 14px; font-weight: 600; color: #38bdf8; margin-top:'
+      ' 15px;">📋 거점별 상세 지연 인텔리전스</p>',
+      unsafe_allow_html=True,
+  )
+  st.dataframe(
+      port_risk_data[["port", "status", "delay_days", "reason"]],
+      use_container_width=True,
+      hide_index=True,
+  )
 
   st.markdown("</div>", unsafe_allow_html=True)
