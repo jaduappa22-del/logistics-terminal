@@ -41,7 +41,7 @@ if "team_quick_memos" not in st.session_state:
 st.markdown("""
     <div class="main-header">
         <span>⚡ AFK LOGISTICS INTELLIGENCE DESK</span>
-        <span style="font-size: 13px; background-color: #18181b; color: #ffcc00; padding: 4px 10px; border-radius: 4px;">OPERATIONS DESK v3.2</span>
+        <span style="font-size: 13px; background-color: #18181b; color: #ffcc00; padding: 4px 10px; border-radius: 4px;">OPERATIONS DESK v3.3</span>
     </div>
 """, unsafe_allow_html=True)
 
@@ -192,7 +192,7 @@ with col_left:
 
   st.markdown("</div>", unsafe_allow_html=True)
 
-  # 2. 🚨 실시간 뉴스 헤드라인 (마켓 지표 바로 아래로 전진 배치)
+  # 2. 실시간 뉴스 헤드라인
   st.markdown("""
         <div class="card">
             <div class="sub-header">🚨 실시간 물류·해운 이슈 헤드라인 (원문 연결)</div>
@@ -300,28 +300,72 @@ with col_left:
 
   st.markdown("</div>", unsafe_allow_html=True)
 
-  # 5. 실무 용어 & 인코텀즈 가이드 탭
+  # 5. 실무 용어 & 인코텀즈 완벽 가이드 덱 (업데이트 완료)
   st.markdown("""
         <div class="card">
             <div class="sub-header">📚 AFK 실무 물류/무역 가이드 덱</div>
     """, unsafe_allow_html=True)
 
   tab_g1, tab_g2, tab_g3 = st.tabs(
-      ["📦 주요 인코텀즈(Incoterms)", "📐 컨테이너 규격 상식", "💡 구매팀 리드타임 팁"]
+      [
+          "📦 인코텀즈(Incoterms) 비용/위험 가이드",
+          "📐 컨테이너 규격 상식",
+          "💡 구매팀 리드타임 팁",
+      ]
   )
 
   with tab_g1:
     st.markdown(
-        "**FOB (Free On Board)**: 선측 인도 조건. 수출자가 선박에 화물을 실을"
-        " 때까지의 비용과 위험을 부담."
+        "#### 🚢 인코텀즈 조건별 비용 및 위험 이전 타이밍 비교"
     )
-    st.markdown(
-        "**CIF (Cost, Insurance and Freight)**: 운임·보험료 도지 인도 조건."
-        " 수입항까지의 운임과 보험료를 수출자가 부담."
-    )
-    st.markdown(
-        "**EXW (Ex Works)**: 공장 인도 조건. 구매자가 공장 출고부터 모든"
-        " 비용과 위험을 부담."
+    incoterms_data = [
+        {
+            "구분": "EXW (공장 인도)",
+            "위험 이전": "공장 출고 직후",
+            "비용 부담": "공장 출고 전까지",
+            "특징": "수출자 최소 의무 / 수입자 모든 책임",
+        },
+        {
+            "구분": "FCA (운송인 인도)",
+            "위험 이전": "지정 장소 인도 시",
+            "비용 부담": "지정 장소까지",
+            "특징": "국내 지정 터미널/창고 인도",
+        },
+        {
+            "구분": "FOB (본선 인도)",
+            "위험 이전": "선박 적재(On Board) 순간",
+            "비용 부담": "선적항 본선 적재까지",
+            "특징": "가장 대중적인 해상 운송 조건",
+        },
+        {
+            "구분": "CFR (운임 포함 인도)",
+            "위험 이전": "선박 적재 시 (FOB 동일)",
+            "비용 부담": "수입항 운임 포함",
+            "특징": "위험은 국내, 운임은 수입항까지 수출자 부담",
+        },
+        {
+            "구분": "CIF (운임·보험료 포함)",
+            "위험 이전": "선박 적재 시 (FOB 동일)",
+            "비용 부담": "수입항 운임 + 보험료 포함",
+            "특징": "CFR에 해상 보험 조건 추가",
+        },
+        {
+            "구분": "DAP (목적지 도착 인도)",
+            "위험 이전": "수입국 목적지 도착 시",
+            "비용 부담": "목적지 하차 전까지",
+            "특징": "수입국 현장까지 운송 및 리스크 수출자 부담",
+        },
+        {
+            "구분": "DDP (관세지급 인도)",
+            "위험 이전": "수입국 목적지 하차 시",
+            "비용 부담": "수입 관세 및 통관 포함",
+            "특징": "수출자가 관세까지 완납 (수입자 문 앞 배달)",
+        },
+    ]
+    st.dataframe(
+        pd.DataFrame(incoterms_data),
+        use_container_width=True,
+        hide_index=True,
     )
 
   with tab_g2:
