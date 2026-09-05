@@ -1,6 +1,7 @@
-import urllib.parse
-import feedparser
+from datetime import datetime
+import json
 import pandas as pd
+import requests
 import streamlit as st
 import yfinance as yf
 
@@ -8,6 +9,9 @@ import yfinance as yf
 st.set_page_config(
     page_title="AFK Logistics Intelligence Desk", page_icon="⚡", layout="wide"
 )
+
+# 구글 앱스 스크립트 웹앱 배포 URL 연동
+GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwpTn92GyJRsUffpQDkL3TUgqperPM2Dhs8vRepGXuVP8T1uB88eYy0cTeQT8CGl6wL/exec"
 
 # 커스텀 CSS (DHL 스타일 포인트 + 다크 레이더 존 조화)
 st.markdown("""
@@ -97,7 +101,7 @@ if "global_port_status" not in st.session_state:
 st.markdown("""
     <div class="main-header">
         <span>⚡ AFK LOGISTICS INTELLIGENCE DESK</span>
-        <span style="font-size: 13px; background-color: #18181b; color: #ffcc00; padding: 4px 10px; border-radius: 4px;">OPERATIONS DESK v4.1</span>
+        <span style="font-size: 13px; background-color: #18181b; color: #ffcc00; padding: 4px 10px; border-radius: 4px;">OPERATIONS DESK v4.3</span>
     </div>
 """, unsafe_allow_html=True)
 
@@ -203,7 +207,7 @@ with col_left:
   tickers = {
       "WTI 원유 (해운 연료비)": "CL=F",
       "USD/KRW (원/달러 환율)": "KRW=X",
-      "BDRY (해운 운임 ETF)": "BDRY",
+      "BDRY (BDI 해운운임 ETF)": "BDRY",
       "Copper (원자재)": "HG=F",
   }
 
@@ -248,45 +252,49 @@ with col_left:
 
   st.markdown("</div>", unsafe_allow_html=True)
 
-  # 2. 실시간 뉴스 헤드라인
+  # 2. 구글 스프레드시트(GAS) 연동 실시간 뉴스레터 브리프
   st.markdown("""
         <div class="card">
-            <div class="sub-header">🚨 실시간 물류·해운 이슈 헤드라인 (원문 연결)</div>
+            <div class="sub-header">🚨 해운·물류 동향 실시간 브리프 (스프레드시트 연동)</div>
     """, unsafe_allow_html=True)
 
 
-  @st.cache_data(ttl=600)
-  def get_logistics_news():
+  @st.cache_data(ttl=300)
+  def get_sheets_logistics_news():
     try:
-      raw_query = "해운 운임 선박 항만 물류"
-      encoded_query = urllib.parse.quote(raw_query)
-      rss_url = (
-          f"https://news.google.com/rss/search?q={encoded_query}&hl=ko&gl=KR&ceid=KR:ko"
-      )
-      feed = feedparser.parse(rss_url)
-      articles = []
-      for entry in feed.entries[:5]:
-        articles.append({"title": entry.title, "url": entry.link})
-      return articles
+      response = requests.get(GAS_WEB_APP_URL, timeout=10)
+      if response.status_code == 200:
+        return response.json()
+      else:
+        return []
     except:
       return []
 
 
-  live_news = get_logistics_news()
+  live_news = get_sheets_logistics_news()
 
   if live_news:
     for idx, article in enumerate(live_news, 1):
+      keyword_label = article.get("keyword", "물류 동향")
+      title_label = article.get("title", "제목 없음")
+      url_label = article.get("url", "#")
+      date_label = article.get("date", "")
+
       st.markdown(
           f"""
             <div class="headline-box">
-                <b>📰 실시간 이슈 {idx}</b><br>
-                👉 <a href="{article['url']}" target="_blank" style="text-decoration: none; font-size: 14px; font-weight: 600; color: #002855;">{article['title']}</a>
+                <b>📰 키워드: {keyword_label}</b><br>
+                👉 <a href="{url_label}" target="_blank" style="text-decoration: none; font-size: 14px; font-weight: 600; color: #002855;">{title_label}</a>
+                <span style="font-size: 11px; color: #71717a; float: right;">({date_label})</span>
             </div>
             """,
           unsafe_allow_html=True,
       )
   else:
-    st.info("실시간 기사를 불러오는 중입니다.")
+    st.info(
+        "스프레드시트로부터 최신 뉴스를 불러오지 못했거나 수집된 기사가"
+        " 없습니다."
+    )
 
   st.markdown("</div>", unsafe_allow_html=True)
 
@@ -445,7 +453,7 @@ with col_left:
 
   st.markdown("</div>", unsafe_allow_html=True)
 
-  # 6. [수동 제어 기능 추가] 글로벌 공급망 지연 & 지오 리스크 레이더 콘솔 (가장 하단 배치)
+  # 6. 글로벌 공급망 지연 & 지오 리스크 레이더 콘솔
   st.markdown("""
         <div class="radar-card">
             <div class="radar-sub-header">🚨 AFK GLOBAL SUPPLY CHAIN DELAY & RISK RADAR</div>
@@ -454,7 +462,6 @@ with col_left:
             </p>
     """, unsafe_allow_html=True)
 
-  # 관리자 편집 익스팬더 (수동 수정 구역)
   with st.expander(
       "⚙️ [관리자용] 거점별 지연 상황 및 사유 수동 업데이트 툴"
   ):
@@ -501,7 +508,6 @@ with col_left:
       }
       st.success(f"'{edit_port}' 현황이 실시간으로 갱신되었습니다!")
 
-  # 현재 세션에 저장된 데이터로 데이터프레임 및 화면 구성
   current_data_list = []
   for p_name, p_val in st.session_state.global_port_status.items():
     current_data_list.append({
@@ -525,11 +531,6 @@ with col_left:
         unsafe_allow_html=True,
     )
     st.map(port_risk_df, latitude="lat", longitude="lon", size=60, zoom=1)
-    st.markdown(
-        '<p style="font-size: 11px; color: #94a3b8; margin-top: 8px;">* 상단의'
-        " 관리자 툴을 통해 현장 상황에 맞춰 즉시 수정할 수 있습니다.</p>",
-        unsafe_allow_html=True,
-    )
 
   with r_col2:
     st.markdown(
