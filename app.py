@@ -26,7 +26,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 세션 상태 초기화 (항만 메모 보드 및 팀 퀵 메모용)
+# 세션 상태 초기화 (항만 메모 보드, 팀 퀵 메모, 글로벌 항만 지연 데이터용)
 if "port_memos" not in st.session_state:
   st.session_state.port_memos = {
       "부산항": {"status": "🟢 원활", "memo": "정상 하역 작업 진행 중"},
@@ -41,11 +41,63 @@ if "team_quick_memos" not in st.session_state:
       "📌 [전달] 상하이항 선적 건 관련 서류 마감 시간 확인 요망",
   ]
 
+if "global_port_status" not in st.session_state:
+  st.session_state.global_port_status = {
+      "상하이항 (중국)": {
+          "lat": 31.2304,
+          "lon": 121.4737,
+          "status": "심각 지연",
+          "delay_days": "+7 ~ 10일",
+          "reason": "성수기 물동량 폭증 및 야드 적체율 90% 초과",
+          "risk_level": "red",
+      },
+      "닝보-주산항 (중국)": {
+          "lat": 29.8683,
+          "lon": 121.5440,
+          "status": "지연 주의",
+          "delay_days": "+3 ~ 5일",
+          "reason": "국지적 기상 악화(풍랑 경보)로 인한 선적 일시 중단",
+          "risk_level": "orange",
+      },
+      "부산항 (한국)": {
+          "lat": 35.1796,
+          "lon": 129.0756,
+          "status": "정상 운영",
+          "delay_days": "지연 없음",
+          "reason": "부두 하역 및 야드 회전율 원활",
+          "risk_level": "green",
+      },
+      "로스앤젤레스항 (미주)": {
+          "lat": 33.7420,
+          "lon": -118.2437,
+          "status": "정상 운영",
+          "delay_days": "지연 없음",
+          "reason": "터미널 철도 연계 원활, 대기 시간 단축",
+          "risk_level": "green",
+      },
+      "로테르담항 (유럽)": {
+          "lat": 51.9244,
+          "lon": 4.4777,
+          "status": "혼잡",
+          "delay_days": "+3일",
+          "reason": "부두 인력 파업 여파 및 하역 장비 점검 지연",
+          "risk_level": "orange",
+      },
+      "파나마 운하 통항": {
+          "lat": 9.1000,
+          "lon": -79.7000,
+          "status": "통항 제한",
+          "delay_days": "+14일 우회",
+          "reason": "가뭄으로 인한 흘수 제한 및 일일 통항 척수 감축",
+          "risk_level": "red",
+      },
+  }
+
 # 상단 AFK 시그니처 배너
 st.markdown("""
     <div class="main-header">
         <span>⚡ AFK LOGISTICS INTELLIGENCE DESK</span>
-        <span style="font-size: 13px; background-color: #18181b; color: #ffcc00; padding: 4px 10px; border-radius: 4px;">OPERATIONS DESK v4.0</span>
+        <span style="font-size: 13px; background-color: #18181b; color: #ffcc00; padding: 4px 10px; border-radius: 4px;">OPERATIONS DESK v4.1</span>
     </div>
 """, unsafe_allow_html=True)
 
@@ -393,45 +445,76 @@ with col_left:
 
   st.markdown("</div>", unsafe_allow_html=True)
 
-  # 6. [신규 편입] 글로벌 공급망 지연 & 지오 리스크 레이더 콘솔 (가장 하단 배치)
+  # 6. [수동 제어 기능 추가] 글로벌 공급망 지연 & 지오 리스크 레이더 콘솔 (가장 하단 배치)
   st.markdown("""
         <div class="radar-card">
             <div class="radar-sub-header">🚨 AFK GLOBAL SUPPLY CHAIN DELAY & RISK RADAR</div>
             <p style="font-size: 13px; color: #94a3b8; margin-bottom: 15px;">
-            전 세계 주요 항만 및 거점별 실시간 지연 일수와 원인을 시각적으로 확인하여 물류 리스크에 선제 대응하세요.
+            전 세계 주요 항만 및 거점별 실시간 지연 상황을 수동으로 업데이트하여 팀원들과 공유하세요.
             </p>
     """, unsafe_allow_html=True)
 
-  port_risk_data = pd.DataFrame({
-      "port": [
-          "상하이항 (중국)",
-          "닝보-주산항 (중국)",
-          "부산항 (한국)",
-          "로스앤젤레스항 (미주)",
-          "로테르담항 (유럽)",
-          "파나마 운하 통항",
-      ],
-      "lat": [31.2304, 29.8683, 35.1796, 33.7420, 51.9244, 9.1000],
-      "lon": [121.4737, 121.5440, 129.0756, -118.2437, 4.4777, -79.7000],
-      "status": ["심각 지연", "지연 주의", "정상 운영", "정상 운영", "혼잡", "통항 제한"],
-      "delay_days": [
-          "+7 ~ 10일",
-          "+3 ~ 5일",
-          "지연 없음",
-          "지연 없음",
-          "+3일",
-          "+14일 우회",
-      ],
-      "reason": [
-          "성수기 물동량 폭증 및 야드 적체율 90% 초과",
-          "국지적 기상 악화(풍랑 경보)로 인한 선적 일시 중단",
-          "부두 하역 및 야드 회전율 원활",
-          "터미널 철도 연계 원활, 대기 시간 단축",
-          "부두 인력 파업 여파 및 하역 장비 점검 지연",
-          "가뭄으로 인한 흘수 제한 및 일일 통항 척수 감축",
-      ],
-      "risk_level": ["red", "orange", "green", "green", "orange", "red"],
-  })
+  # 관리자 편집 익스팬더 (수동 수정 구역)
+  with st.expander(
+      "⚙️ [관리자용] 거점별 지연 상황 및 사유 수동 업데이트 툴"
+  ):
+    edit_port = st.selectbox(
+        "수정할 거점 선택",
+        list(st.session_state.global_port_status.keys()),
+        key="edit_p",
+    )
+    current_info = st.session_state.global_port_status[edit_port]
+
+    new_stat = st.selectbox(
+        "상태 변경",
+        ["정상 운영", "지연 주의", "심각 지연", "혼잡", "통항 제한"],
+        index=[
+            "정상 운영",
+            "지연 주의",
+            "심각 지연",
+            "혼잡",
+            "통항 제한",
+        ].index(current_info["status"]),
+        key="edit_s",
+    )
+    new_delay = st.text_input(
+        "지연 일수 변경", value=current_info["delay_days"], key="edit_d"
+    )
+    new_reason = st.text_input(
+        "지연 사유 변경", value=current_info["reason"], key="edit_r"
+    )
+    new_level = st.selectbox(
+        "리스크 심각도 (색상)",
+        ["green", "orange", "red"],
+        index=["green", "orange", "red"].index(current_info["risk_level"]),
+        key="edit_l",
+    )
+
+    if st.button("거점 정보 즉시 반영", use_container_width=True):
+      st.session_state.global_port_status[edit_port] = {
+          "lat": current_info["lat"],
+          "lon": current_info["lon"],
+          "status": new_stat,
+          "delay_days": new_delay,
+          "reason": new_reason,
+          "risk_level": new_level,
+      }
+      st.success(f"'{edit_port}' 현황이 실시간으로 갱신되었습니다!")
+
+  # 현재 세션에 저장된 데이터로 데이터프레임 및 화면 구성
+  current_data_list = []
+  for p_name, p_val in st.session_state.global_port_status.items():
+    current_data_list.append({
+        "port": p_name,
+        "lat": p_val["lat"],
+        "lon": p_val["lon"],
+        "status": p_val["status"],
+        "delay_days": p_val["delay_days"],
+        "reason": p_val["reason"],
+        "risk_level": p_val["risk_level"],
+    })
+
+  port_risk_df = pd.DataFrame(current_data_list)
 
   r_col1, r_col2 = st.columns([2, 1])
 
@@ -441,11 +524,10 @@ with col_left:
         " 주요 거점 리스크 레이더 맵</p>",
         unsafe_allow_html=True,
     )
-    st.map(port_risk_data, latitude="lat", longitude="lon", size=60, zoom=1)
+    st.map(port_risk_df, latitude="lat", longitude="lon", size=60, zoom=1)
     st.markdown(
-        '<p style="font-size: 11px; color: #94a3b8; margin-top: 8px;">* 붉은색 및'
-        " 주황색 표기 거점은 일정 조율 및 대체 루트 검토가 필요한"
-        " 구간입니다.</p>",
+        '<p style="font-size: 11px; color: #94a3b8; margin-top: 8px;">* 상단의'
+        " 관리자 툴을 통해 현장 상황에 맞춰 즉시 수정할 수 있습니다.</p>",
         unsafe_allow_html=True,
     )
 
@@ -455,12 +537,12 @@ with col_left:
         " 거점 요약</p>",
         unsafe_allow_html=True,
     )
-    for _, row in port_risk_data.iterrows():
+    for _, row in port_risk_df.iterrows():
       if row["risk_level"] == "red":
         st.markdown(
             f"""
                 <div class="risk-card-red">
-                    <b>🔴 {row['port']}</b><br>
+                    <b>🔴 {row['port']} ({row['status']})</b><br>
                     <span style="font-size: 12px; color: #fca5a5;">지연: <b>{row['delay_days']}</b></span><br>
                     <span style="font-size: 11px; color: #cbd5e1;">원인: {row['reason']}</span>
                 </div>
@@ -471,7 +553,7 @@ with col_left:
         st.markdown(
             f"""
                 <div class="risk-card-orange">
-                    <b>🟠 {row['port']}</b><br>
+                    <b>🟠 {row['port']} ({row['status']})</b><br>
                     <span style="font-size: 12px; color: #fdba74;">지연: <b>{row['delay_days']}</b></span><br>
                     <span style="font-size: 11px; color: #cbd5e1;">원인: {row['reason']}</span>
                 </div>
@@ -485,7 +567,7 @@ with col_left:
       unsafe_allow_html=True,
   )
   st.dataframe(
-      port_risk_data[["port", "status", "delay_days", "reason"]],
+      port_risk_df[["port", "status", "delay_days", "reason"]],
       use_container_width=True,
       hide_index=True,
   )
